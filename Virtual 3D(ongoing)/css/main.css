@@ -1,0 +1,90 @@
+.bgimg{
+   position: absolute;
+    width:100%;
+    height: 93%;
+}
+.dropdown-menu{
+    background-color: #343a40;
+}
+.dropdown-item{
+   color: aliceblue;
+}
+
+#nonavbg{
+    height: 100%;
+    top: 0;
+    z-index: -1;
+}
+#video_frame{
+      position: absolute;
+      -webkit-box-shadow: 0 0 20px #000;
+      -moz-box-shadow: 0 0 20px #000;
+      margin-left: auto;
+      margin-right: auto;
+      width: 670px;
+      left:150px;
+      height: 500px;
+      overflow: none;
+      margin: 5% auto;
+      
+}
+
+#remoteVideo{
+      position: absolute;
+      -webkit-box-shadow: 0 0 20px #000;
+      -moz-box-shadow: 0 0 20px #000;
+      margin-left: auto;
+      margin-right: auto;
+      width: 670px;
+      left: 900px;
+      height: 500px;
+      overflow: none;
+      margin: 5% auto;
+      
+}
+
+#start{
+    position: absolute;
+    left: 450px;
+    top:600px;
+    -webkit-box-shadow: 0 0 20px #000;
+      -moz-box-shadow: 0 0 20px #000;
+}
+
+#call{
+    left: 550px;
+    top:600px;
+    position: absolute;
+    -webkit-box-shadow: 0 0 20px #000;
+      -moz-box-shadow: 0 0 20px #000;
+}
+
+#end{
+    position: absolute;
+    left: 650px;
+    top:600px;
+    -webkit-box-shadow: 0 0 20px #000;
+      -moz-box-shadow: 0 0 20px #000;
+}
+#register_account{
+    position: relative;
+    left: 220px;
+}
+#forgot_password{
+    color: crimson;
+    position: relative;
+    left: 295px;
+}
+
+.login_form{
+    width:600px;
+    margin-left: auto;
+    margin-right: auto;
+   margin-top: 260px;
+}
+.register_form{
+    width:600px;
+    margin-left: auto;
+    margin-right: auto;
+   margin-top: 200px;
+}
