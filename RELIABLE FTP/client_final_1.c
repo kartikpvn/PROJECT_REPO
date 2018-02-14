@@ -1,13 +1,17 @@
+#include <unistd.h>
 #include <sys/socket.h>
 #include <stdio.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <errno.h>
-#include <string.h> 
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <assert.h>
+#include<sys/time.h>
+#include <arpa/inet.h>
+
 //#define FILESIZE 4914851  
 long timeval()
 {
