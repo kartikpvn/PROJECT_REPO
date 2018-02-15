@@ -78,8 +78,7 @@ int main (int argc, char *argv[])
     }
     filedata=mmap(NULL,filesize,PROT_READ,MAP_PRIVATE | MAP_POPULATE,fd,0);
     temp_data=filedata;
- //   printf("\n Length of temp_data : %d",strlen(filedata));
-    counter=filesize/1475;
+   counter=filesize/1475;
     remaining=filesize%1475;
     int num_of_packets=counter,pack_size;
 
@@ -93,11 +92,6 @@ int main (int argc, char *argv[])
 
     time_out.tv_sec=0;
     time_out.tv_usec=300000;
-    /*if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&time_out,sizeof(time_out)) < 0)
-    {
-      perror("Could not set timer");
-    }*/
-
 
     memset (datagram, 0, 1500);
     memset (datagram1, 0, 1500);
@@ -114,17 +108,12 @@ int main (int argc, char *argv[])
 
 
     file_sent=htonl(filesize);
-    //printf("\n File size : %d",filesize);
     memcpy(data,&seq_sent,sizeof(uint32_t));
-    //printf("\n Sequence number length: %d",strlen(data));
     data=data+4;
     memcpy(data,&file_sent,sizeof(uint32_t));
-    //printf("\n filesize length : %d",strlen(data));
-
     //some address resolution
     strcpy(source_ip , argv[2]);
     sin.sin_family = AF_INET;
-    //sin.sin_port = htons(80);
     sin.sin_addr.s_addr = inet_addr (argv[3]);
 
     //Fill in the IP Header
@@ -136,21 +125,17 @@ int main (int argc, char *argv[])
     iph->frag_off = 0;
     iph->ttl = 255;
     iph->protocol = IPPROTO_RAW;
-    iph->check = 0;      //Set to 0 before calculating checksum
+    iph->check = 0;   
     iph->saddr = inet_addr ( source_ip );    //Spoof the source ip address
     iph->daddr = sin.sin_addr.s_addr;
 
     //Ip checksum
     iph->check = csum ((unsigned short *) datagram, iph->tot_len);
 
-    //while(ack_recvd!=1)
-    {
-     //printf("\n In while \n");
      if (sendto (s, datagram, iph->tot_len ,  0, (struct sockaddr *) &sin, sizeof (sin)) < 0)
         {
             perror("sendto failed");
         }
-//           printf ("Packet Send. Length & Sequence: %d %d\n" , iph->tot_len,seq);
       if(recvfrom(s,ack_pack,65535,0,&addr,&fromlen)<0)
                 perror("\n Receive failed");
       else
@@ -160,7 +145,7 @@ int main (int argc, char *argv[])
                   ack_recvd=1;
                 }
          }
-    }
+    
 
     char buf[5000];
     int i=0;
@@ -191,8 +176,6 @@ int main (int argc, char *argv[])
         memcpy(data,&seq_sent,sizeof(uint32_t));
         data=data+4;
         memcpy (data, buf,pack_size);
-        //printf("\n data : %d", strlen(data));
-        //printf("Entered WHile ***************************************\n");
 
         iph->tot_len = sizeof (struct iphdr) + pack_size+4;
         iph->check = csum ((unsigned short *) datagram, iph->tot_len);
@@ -203,18 +186,12 @@ int main (int argc, char *argv[])
             perror("sendto failed");
         }
 
-        else
-        {
-            //printf ("Packet Send. Length & Sequence: %d %d\n" , iph->tot_len,seq); 
-        }
         memset (buf, 0, 5000);
 #if 1
-        //printf("\n Inside If 0");
         temp_data=temp_data+1475;
         counter--;
 #endif
 #if 0 
-        //printf("\n Inside If 1");    
         temp_data=temp_data+1475*2;
         counter-=2;
         seq=seq+1; 
@@ -235,35 +212,20 @@ int main (int argc, char *argv[])
     memset(lost_seq,0,3000000);
     lost_track=lost_seq;
 
-  /*if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&time_out,sizeof(time_out)) < 0)
-    {
-      perror("Could not set timer");
-    }*/
 
     int k=0,m=0;
     while(1)
     {
-            //memset(datagram,0,1500);
             k=0;
             lost_track=lost_seq;
             while(1)
             {
-              //      memset(datagram,0,1500);
-                    //data=datagram+sizeof(struct iphdr);
-                    //printf("\n Waiting for ACK or NACK \n");
                     if(recvfrom(s,datagram1,1500,0,&addr,&fromlen)<0)
                     {
-                            // *data='1';
                            perror(" Recvfrom failed");
                             break;
                     }
                     int i = 0;
-                    //printf("\n About to print datagram");
-                    /*for(i = 0;i < 100; i+=10) {
-                        printf("%0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x \n",
-                                datagram1[i], datagram1[i+1], datagram1[i+2], datagram1[i+3],  datagram1[i+4],
-                                datagram1[i+5], datagram1[i+6], datagram1[i+7], datagram1[i+8],  datagram1[i+9]);
-                    }*/
                    data = datagram1+sizeof(struct iphdr);
                     iph =(struct iphdr*)datagram1;
                     tot_len=iph->tot_len;
@@ -279,7 +241,6 @@ int main (int argc, char *argv[])
                             memcpy(&nackd_number,(datagram1+sizeof(struct iphdr)+1),2);
                             nackd_number=ntohs(nackd_number);
                             k++;
-                            //printf("\n Received NACK : %d string_len %d , also %d\n", k, nackd_number, tot_len);
                             memcpy(lost_track,datagram1 + sizeof(struct iphdr)+3,(nackd_number*4));
                             lost_track=lost_track + (nackd_number*4);
                             no_seq_num=no_seq_num+nackd_number;
@@ -294,11 +255,9 @@ int main (int argc, char *argv[])
             else
             {
                     memset(datagram,0,1500);
-                    //memcpy(datagram, iph,sizeof(struct iphdr));
                     iph=(struct iphdr*)datagram;
                     strcpy(source_ip , argv[2]);
                     sin.sin_family = AF_INET;
-                    //sin.sin_port = htons(80);
                     sin.sin_addr.s_addr = inet_addr (argv[3]);
 
                     //Fill in the IP Header
@@ -313,12 +272,9 @@ int main (int argc, char *argv[])
                     iph->check = 0;      //Set to 0 before calculating checksum
                     iph->saddr = inet_addr ( source_ip );    //Spoof the source ip address
                     iph->daddr = sin.sin_addr.s_addr;
-                    //printf("\n Inside Else : %d ",strlen(lost_seq));
                     lost_track=lost_seq;
-                    //printf("\n Number of sequence numbers %d",no_seq_num);
                     for(m=0;m < no_seq_num;m++)
                     {
-                            //printf("\n Inside For");
                             data = datagram + sizeof(struct iphdr);
                             memset(data,0,1480);
                             memcpy(&recvd_seq,lost_track,4);
@@ -326,11 +282,9 @@ int main (int argc, char *argv[])
                             lost_track=lost_track+4;
                             data=data+4;
                             recvd_seq=ntohl(recvd_seq);
-                            //printf("Recvd_seq : %d, %d, %d \n",recvd_seq,m,no_seq_num);
                             temp_data=filedata+((recvd_seq-1)*1475);
-                            //printf("\n Temp data offset done \n");
                             pack_size=(recvd_seq==num_of_packets+1) ? remaining : 1475;
-                            //printf("Packet size = %d \n",pack_size);
+                            
 #if 1
                             memcpy(buf,temp_data,recvd_seq==num_of_packets+1 ? remaining:1475);       // Vandhana instead of 1475 check if it is last packet and then add only remaining ones
                             buf[1476]='\0';
@@ -341,13 +295,9 @@ int main (int argc, char *argv[])
                             {
                                     perror("sendto failed 2");
                             }
-                            else
-                            {
-                                    //printf ("Packet Send. Length & Sequence for NACKs: %d \n" , iph->tot_len,recvd_seq);
-                            }
+                                                              }
 #endif
                     }
-                    //printf("\n Processed received NACK packets");
                     memset(lost_seq,0,3000000);
                     no_seq_num=0;
             }
@@ -356,6 +306,5 @@ int main (int argc, char *argv[])
     close(s);
     munmap(filedata,filesize);
     free(lost_seq);
-    //printf(" \n Start time : %d : %d \n",t1.tv_sec,t1.tv_usec);
     return 0;
 }
