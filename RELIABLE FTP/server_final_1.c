@@ -305,10 +305,7 @@ int main (int argc, char *argv[])
                             {
                                     perror("sendto failed 2");
                             }
-                            else
-                            {
-                                    printf ("Packet Send. Length & Sequence for NACKs: %d \n" , iph->tot_len,recvd_seq);
-                            }
+
 #endif
                     }
                     memset(lost_seq,0,3000000);
