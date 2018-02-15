@@ -1,1 +1,31 @@
+NETWORK ENVIRONMENT CHARACTERISTICS:
+100Mbps ethernet link with 20% packet loss and 200ms delay
+2 NODES both have the sending and receving programs.
+server_final_1.c - sender
+client_final_1.c - receiver
+
+AIM : TO DEMONSTRATE SUCCESSFUL TWO AND FRO TRANSFER-RECEIVE OF A FILE WITH FILE SIZE DETERMIEND BY THE USER BETWEEN 2 NODES 
+ CONNECTED WITH EACH OTHER ON A ETHERNET LINK WITH THE HIGHEST THROUGHPUT.
+
+RELIABLE FTP
+Mode of TranSfer - server to client
+then a 5sec pause after that client to server
+
+
+1. make the file with test_file.txt on the client side using the following command:
+  if=/dev/zero of=testfile1.txt  bs=1024M  count=1
+  
+2. run the scripts in the following order 
+                 a) NODE-1 : ./TestA.sh -  simulating the NODE-2 which is  waiting for a file that is being sent by the NODE-1,
+                                  after receving the file with a 5s pause NODE-2 is sending the same file back to the NODE-1. 
+                 
+                 b) NODE-2 : ./testB.sh -  simulating the NODE-1 sending a file (size above determined) to NODE-2
+                                  and then waiting to get the same file back the NODE-2.
+                                      
+5. upon completion will get the file testfile_1.txt at the other NODE.  
+
+SCRIPTS
+1. THE SCRIPTS ARE HARD CODED WITH CLIENT AND SERVER IP ADDRESS
+2. and the end of each script we perform the m5sum to ensure that the files were not corrupted.
+
 
