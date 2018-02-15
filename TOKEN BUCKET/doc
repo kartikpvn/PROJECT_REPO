@@ -1,1 +1,89 @@
+AIM : To emulate token bucket algorithm
+----
+Concepts exposed to: multithreading , mutex , condition variables.
+--------------------
+
+Overview: The token bucket is an algorithm used in packet switched computer networks. It can be used to check that data transmissions,
+in the form of packets, conform to defined limits on bandwidth.There is equiavelent to the leaky bucket algorithm , where the arrival rate
+of packets may bursty but the output rate of packets is always stable as it determined by the token bucket. 
+
+
+      
+Parameters :
+------------
+
+    1) -n :      Total Number of Packets.
+    2) -lambda : Packet Arrival Rate
+    3) -mu :     Service Rate(Processing Rate)
+    4) -r :      Token Bucket Rate
+    5) -B :      Token Bucket Depth
+    6) -P :      Number of tokens Requried for the packet to get processed. 
+
+
+Implementation:
+---------------
+2 Queues - Q1 and Q2 representing input and processing buffers.
+
+There are 4 threads
+
+1. Packet Arrival Thread : 
+  a) This thread generates packets on a rate determined by the default, input file or the command line parameters.
+  b) Adds the packet into the Q1 List
+  c) Checks if the Q2 list is empty,this means nothing is being processed.
+      c.1) If No, do nothing.
+      c.2) If Yes,the check if token required for that packet determined by the parameter P is less than token count
+           c.2.1) if yes, we unlink the packet from the Q1 and add it to Q2 and broadcast the server
+                  threads about the arrival of packet.
+           c.2.2) if no, we do nothing.       
+
+2. Token Bucket Thread:
+  a) Token bucket thread generates tokens on a regular rate determined by the command line argument , default or the file.
+  b) Checks whether the number of tokens in the bucket is less than token depth 
+      b.1) if yes add this token
+      b.2) if no  drop the token
+  c) check if there are any packets in Q1
+      c.1) if no we do nothing
+      c.2) if yes, we check for sufficient tokens in the token bucket.
+           c.2.1) if yes  we check if there are sufficient tokens in the token bucket,
+                   c.2.1.1) unlink the packet from the Q1 and add it to the Q2.
+                   c.2.1.2) we do nothing.
+                   
+  d) check if the Q2 is empty.
+      d.1) if yes we signal the servers about the arrival of a packet.
+      d.2) if no we do nothing.
+      
+      
+3.) Server Threads:
+   a) Keeping waiting until there are any packets in the processing buffer. 
+   b) Server thread emulates processing by sleeping for a fixed period of time which is determined by the command line arguemnt, default
+     or the file.
+   c) Check if the number of packets received is eqaul to the number of total packets.
+        c.1) if yes, we close the token bucket thread and the other server thread and return peacefully.
+        c.2) otherwise we loop back.
+      
+
+STEPS
+--------
+1. Do make in Command line.
+2. Run the executable warmup2 on the command line with or without parameters.
+                      WITH: In this case you are overiding default parameters/ . The parameters set are generic for all packets.
+                      WITHOUT: using the default parameters. The parameters set are generic for all packets.
+                      INPUTFILE : if you give an input file we are describing the parameters of each file.
+                      
+                      
+                      
+                      
+FILE DESCRIPTION:
+------------------
+
+1. Header Files: - cs402.h , my402list.h
+
+2. Utlity Files: - My402List.c - provides the definition  of a doubly linked list , which is used to implement queues Q1 and Q2.  
+
+
+                      
+                      
+                      
+                      
+                     
 
