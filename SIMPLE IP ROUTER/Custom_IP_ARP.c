@@ -80,24 +80,6 @@ uint16_t ip_checksum(void* vdata,size_t length)
     // this is implememneted. removed conversion. Return the checksum in network byte order.
   return htons(~acc);
 }
-/*
-uint16_t icmp_checksum(uint16_t *buffer, uint32_t size) 
-{
-    unsigned long cksum=0;
-    while(size >1) 
-    {
-        cksum+=*buffer++;
-        size -=sizeof(USHORT);
-    }
-    if(size ) 
-    {
-        cksum += *(UCHAR*)buffer;
-    }
-    cksum = (cksum >> 16) + (cksum & 0xffff);
-    cksum += (cksum >>16);
-    return (uint16_t)(~cksum);
-}
-*/
 struct routing_table
 {
   struct in_addr s_addr,next_hop;
@@ -173,21 +155,11 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
   dev_1[0]='\0';
   ifr.ifr_name[0]='\0';
   
-  //pthread_mutex_lock(&m);
-//  printf("Packet number [%d], length of this packet is: %d\n \n", count++, pkthdr->len);
   eth=(struct sniff_ethernet*)packet;
   iph=(struct sniff_ip*)(packet+14);
   
   strcpy(rec_dst,inet_ntoa(iph->ip_dst));
 
-  /*printf(" Source MAC : %x.%x.%x.%x.%x.%x, count-%d \n",eth->ether_shost[0],eth->ether_shost[1],eth->ether_shost[2],eth->ether_shost[3],eth->ether_shost[4],eth->ether_shost[5],(count-1));
-  printf(" Destination MAC : %x.%x.%x.%x.%x.%x,count-%d \n",eth->ether_dhost[0],eth->ether_dhost[1],eth->ether_dhost[2],eth->ether_dhost[3],eth->ether_dhost[4],eth->ether_dhost[5],(count-1));
-  printf(" Source IP : %s,count-%d \n",inet_ntoa(iph->ip_src),(count-1));
-  printf(" Destination IP : %s %s ,count-%d\n",inet_ntoa(iph->ip_dst),rec_dst,(count-1));*/
- 
-  /*Injecting the packet in the network*/
-
-  /*Updating the IP packet headers for ttl and checksum*/
   iph->ip_ttl--;
 
   char pcap_errbuf[PCAP_ERRBUF_SIZE];
@@ -197,11 +169,7 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
 
   if(iph->ip_ttl==0)
      {
-    //for(m=0;m<num_devices;m++)
-    //{
-      //  printf(" Inside TTL for \n");
         memcpy(dev_1,useless,4);
-        //printf(" Inside TTL for copy successfull :%s , %s\n",dev_1,useless);
       pcap_t* ppcap = pcap_open_live(useless, 98, 0, 0, pcap_errbuf);
 
       if(ppcap == NULL)
@@ -212,24 +180,16 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
       }
 
       strcpy(ifr.ifr_name,useless);
-      //printf(" Inside TTL for copy successfull 1 : %s\n",ifr.ifr_name);
       if(ioctl(pcap_fileno(ppcap),SIOCGIFHWADDR,&ifr)<0)
       {
-        //pthread_mutex_unlock(&m);
           perror("ioctl 1 :");
       }
       else
       {
 
         s_hw= (unsigned char*)ifr.ifr_hwaddr.sa_data;
-        //printf(" MAC : %x.%x.%x.%x.%x.%x ; Protocol family : %d\n", s_hw[0],s_hw[1],s_hw[2],s_hw[3],s_hw[4],s_hw[5],ifr.ifr_hwaddr.sa_family); //SIOCGIFHWADDR
       }
-      //if(strcmp(s_hw,eth->ether_dhost)==0)
-        //{
            memcpy(ifname,dev_1,4);
-          // printf(" Inside TTL for copy successfull 2 %s, %d\n",ifname,(count-1));
-			//printf("Protcol Version %d\n",IP_V(iph)); 
-         //next_ip.s_addr=loop->next_hop.s_addr;
            null=(char*)(packet+14+20+8);
            memmove(null,iph,28);
            iph->ip_ttl=64;
@@ -240,51 +200,30 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
            icmp->unused=(uint32_t)0;
            icmp->checksum = 0;
            icmp->checksum = ip_checksum((char*)(packet+14+20),ntohs(iph->ip_len)-20);
-           //null=(char*)(packet+14+20+4);
-           //memcpy(null,iph,28);
-          // iph->ip_len = 56;
            memcpy(eth->ether_dhost,eth->ether_shost,6);
-        //printf("///***Destination Host********///%s, %d\n",eth->ether_dhost,(count-1));
-		   flag=1;
-          //  printf("Gurleen <3 <3 <3 <3 <3 Source BEFORE %s \n",inet_ntoa(iph->ip_src)); 
-        //inet_aton("10.1.0.1",&iph->ip_dst);
+ 		   flag=1;
            iph->ip_dst.s_addr=iph->ip_src.s_addr;
-           // printf("Gurleen <3 <3 <3 <3 <3 Destination AFTER %s \n",inet_ntoa(iph->ip_dst)); 
            if(ioctl(pcap_fileno(ppcap),SIOCGIFADDR,&ifr)<0)
       {
-        //pthread_mutex_unlock(&m);
           perror("ioctl 2:");
       }
       else
       {
 
         s_ip= (struct sockaddr_in*)&ifr.ifr_addr;
-        //printf(" IP : %s ; Interface : %s MAC : %02x.%02x.%02x.%02x.%02x.%02x\n",inet_ntoa(s_ip->sin_addr),ifname,s_hw[0],s_hw[1],s_hw[2],s_hw[3],s_hw[4],s_hw[5]); //SIOCGIFHWADDR
       }
-      //printf("Source ip AFTER %s, \n",inet_ntoa(iph->ip_src));  
-      //printf(" Destination after changing it %s \n",inet_ntoa(iph->ip_dst));
-            //memcpy(&iph->ip_src,&s_ip->sin_addr,sizeof(struct sockaddr_in));
- 	    iph->ip_src.s_addr=s_ip->sin_addr.s_addr;
-      //inet_aton("12.12.12.12",&iph->ip_src);
-		//printf("++++++++++++++++++++++++++ \n");
-		//printf("Source Address = %x ; Destination address = %x , in_addr size : %d \n",&iph->ip_src,&iph->ip_dst,sizeof(struct in_addr));
-		//printf("Source ip AFTER %s @244 \n ",inet_ntoa(iph->ip_src));
-	      //  printf(" Destination AFTER %s \n",inet_ntoa(iph->ip_dst));
-
- //break;
-         //}
-      //}
+          iph->ip_src.s_addr=s_ip->sin_addr.s_addr;
+        }
+      }
     }
   else
   {
-    // printf("Source ip AFTER %s in else ######### \n ",inet_ntoa(iph->ip_src)); 
     /* Checking in the routing table */
 
       track_dot=rec_dst;
       temp=strchr(track_dot,'.');
       while(temp!=NULL)
       {
-       //printf(" Inside while1 : %s\n",track_dot); 
        track_dot=temp;
        track_dot++;
        temp=strchr(track_dot,'.');
@@ -297,7 +236,6 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
          track_dot=rt_dst;
          while(temp=strchr(track_dot,'.'))
          {
-          //printf("\n Inside while 2"); 
             track_dot=temp;
             track_dot++;
          }
@@ -305,7 +243,6 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
          if(strcmp(rt_dst,rec_dst)==0)
          {
            strcpy(ifname,loop->ifname);
-      //     printf(" Found the match : %s \n",ifname);
            next_ip.s_addr=loop->next_hop.s_addr;
            break;
           }        
@@ -314,31 +251,26 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
        /* Injecting the packet into the destination interface */
      
   pcap_t* ppcap = pcap_open_live(ifname, 98, 0, 0, pcap_errbuf);
-    //printf("Source of the sending packet @289: %s \n",inet_ntoa(iph->ip_src));
   if(ppcap == NULL)
   {
-    //printf("Not able to inject the packet on interface: %s\n", pcap_errbuf);
-    //perror("ioctl 3:")
-          //pthread_mutex_unlock(&m);
     return;
   }
 
   strncpy(ifr.ifr_name,ifname,15);
   if(ioctl(pcap_fileno(ppcap),SIOCGIFHWADDR,&ifr)<0)
   {
-  //pthread_mutex_unlock(&m);
     perror("ioctl 3:");
   }
   else
   {
     s_hw= (unsigned char*)ifr.ifr_hwaddr.sa_data;
-    //printf(" MAC : %x.%x.%x.%x.%x.%x ; Protocol family out loop : %d\n", s_hw[0],s_hw[1],s_hw[2],s_hw[3],s_hw[4],s_hw[5],ifr.ifr_hwaddr.sa_family); //SIOCGIFHWADDR
+    printf(" MAC : %x.%x.%x.%x.%x.%x ; Protocol family out loop : %d\n", s_hw[0],s_hw[1],s_hw[2],s_hw[3],s_hw[4],s_hw[5],ifr.ifr_hwaddr.sa_family); //SIOCGIFHWADDR
   }
 
   memcpy(eth->ether_shost,s_hw,6);
 
   /* Finding the destination MAC address */
-//printf("Source of the sending packet @312 : %s \n",inet_ntoa(iph->ip_src));
+printf("Source of the sending packet @312 : %s \n",inet_ntoa(iph->ip_src));
     if(flag==0)
    {
   memset(&arpreq, 0, sizeof(arpreq));
@@ -346,54 +278,43 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
   sin->sin_family = AF_INET;
   sin->sin_addr.s_addr = next_ip.s_addr;
   strcpy(arpreq.arp_dev,ifname);
-  //printf("Next hop ip %d: %s \n",(count-1),inet_ntoa(sin->sin_addr));
+  printf("Next hop ip %d: %s \n",(count-1),inet_ntoa(sin->sin_addr));
 
  if (ioctl(pcap_fileno(ppcap), SIOCGARP, &arpreq) < 0) 
   {
-  //pthread_mutex_unlock(&m);
     perror("ioctl 2");
-    //exit(0);
   }
 
   if (arpreq.arp_flags & ATF_COM) 
   {
     d_hw = (unsigned char *) &arpreq.arp_ha.sa_data[0];
 
-    //printf("Ethernet address: %02X:%02X:%02X:%02X:%02X:%02X",d_hw[0], d_hw[1], d_hw[2], d_hw[3], d_hw[4], d_hw[5]);
-    //printf("\n");
+    printf("Ethernet address: %02X:%02X:%02X:%02X:%02X:%02X",d_hw[0], d_hw[1], d_hw[2], d_hw[3], d_hw[4], d_hw[5]);
   } 
-  else 
-  {
-    //printf("*** INCOMPLETE ***\n");
-  }
+  
 
   memcpy(eth->ether_dhost,d_hw,6);
-  //printf(" ***** NEW Destination MAC : %x.%x.%x.%x.%x.%x \n",eth->ether_dhost[0],eth->ether_dhost[1],eth->ether_dhost[2],eth->ether_dhost[3],eth->ether_dhost[4],eth->ether_dhost[5]);
 }
-  //printf("\n Length of packet or data : %d %d",ntohs(iph->ip_len)+14,(count-1));
      
   iph->ip_sum = 0;
   iph->ip_sum = ip_checksum(iph, 20);
-	//printf("/****Protocol Version afterrrrrrrrrrrrrrrrrrrrrr- %d",IP_V(iph));
+	printf("/****Protocol Version afterrrrrrrrrrrrrrrrrrrrrr- %d",IP_V(iph));
 
-  //printf("Source of the sending packet : %s \n",inet_ntoa(iph->ip_src));
-  //printf(" Source in hex : %02x.%02x.%02x.%02x",packet[25],packet[26],packet[27],packet[28]);
+  printf("Source of the sending packet : %s \n",inet_ntoa(iph->ip_src));
+  printf(" Source in hex : %02x.%02x.%02x.%02x",packet[25],packet[26],packet[27],packet[28]);
   for(int n=0;n<101;n++)
   {
-    //printf("%02x.",packet[n]);
+    printf("%02x.",packet[n]);
   }
   int p = pcap_sendpacket(ppcap, packet, ntohs(iph->ip_len)+14);
   if (p != 0)
   {
-  //pthread_mutex_unlock(&m);
-    pcap_perror(ppcap, "Failed\n");
+   pcap_perror(ppcap, "Failed\n");
     pcap_close(ppcap);
   }
   else
   {
     pcap_close(ppcap);
-    //printf("Packet successfully sent %d\n",(count-1));
-  //pthread_mutex_unlock(&m);
   }
 
 }
@@ -411,7 +332,6 @@ void *sniff_1(void *arg)
   if( handle==NULL)
     printf(" Could not create handler : %s \n",errbuf);
 
-  //if(pcap_compile(handle, &fp, "src net 10.1.2", 0, net))
   pcap_setdirection(handle, PCAP_D_IN);
   pcap_loop(handle,-1, callback, dev_name); 
 
@@ -450,13 +370,7 @@ int main(int argc,char **argv)
     head=route;
     temp=route;
 
-    /*route=(struct routing_table*)malloc(sizeof(struct routing_table));
-    inet_aton("10.1.2.0", &route->s_addr);
-    inet_aton("10.1.2.3", &route->next_hop);
-    strncpy(route->ifname,"eth0",4);
-    temp->next=route;
-    temp=route;    */
-
+ 
     route=(struct routing_table*)malloc(sizeof(struct routing_table));
     inet_aton("10.10.1.0", &route->s_addr);
     inet_aton("10.10.1.1", &route->next_hop);
