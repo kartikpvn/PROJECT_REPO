@@ -80,6 +80,24 @@ uint16_t ip_checksum(void* vdata,size_t length)
     // this is implememneted. removed conversion. Return the checksum in network byte order.
   return htons(~acc);
 }
+/*
+uint16_t icmp_checksum(uint16_t *buffer, uint32_t size) 
+{
+    unsigned long cksum=0;
+    while(size >1) 
+    {
+        cksum+=*buffer++;
+        size -=sizeof(USHORT);
+    }
+    if(size ) 
+    {
+        cksum += *(UCHAR*)buffer;
+    }
+    cksum = (cksum >> 16) + (cksum & 0xffff);
+    cksum += (cksum >>16);
+    return (uint16_t)(~cksum);
+}
+*/
 struct routing_table
 {
   struct in_addr s_addr,next_hop;
@@ -125,15 +143,10 @@ struct sniff_icmp
   uint32_t unused;
 };
 
-#define IP_HL(ip)   (((ip)->ip_vhl) & 0x0f)
-#define IP_V(ip)    (((ip)->ip_vhl) >> 4)
-
 
 
 void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *packet)
 {
-
-
   static int count = 1;
   struct sniff_ethernet *eth=NULL;
   struct sniff_ip *iph=NULL;
@@ -154,12 +167,15 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
   ifname[0]='\0';
   dev_1[0]='\0';
   ifr.ifr_name[0]='\0';
-  
   eth=(struct sniff_ethernet*)packet;
   iph=(struct sniff_ip*)(packet+14);
   
   strcpy(rec_dst,inet_ntoa(iph->ip_dst));
 
+ 
+  /*Injecting the packet in the network*/
+
+  /*Updating the IP packet headers for ttl and checksum*/
   iph->ip_ttl--;
 
   char pcap_errbuf[PCAP_ERRBUF_SIZE];
@@ -169,17 +185,19 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
 
   if(iph->ip_ttl==0)
      {
+	printf(" Inside TTL for \n");
         memcpy(dev_1,useless,4);
+        //printf(" Inside TTL for copy successfull :%s , %s\n",dev_1,useless);
       pcap_t* ppcap = pcap_open_live(useless, 98, 0, 0, pcap_errbuf);
 
       if(ppcap == NULL)
       {
-        //printf("Not able to open the interface: %s\n", pcap_errbuf);
-        //pthread_mutex_unlock(&m);
+        printf("Not able to open the interface: %s\n", pcap_errbuf);
         return;
       }
 
       strcpy(ifr.ifr_name,useless);
+      printf(" Inside TTL for copy successfull 1 : %s\n",ifr.ifr_name);
       if(ioctl(pcap_fileno(ppcap),SIOCGIFHWADDR,&ifr)<0)
       {
           perror("ioctl 1 :");
@@ -201,7 +219,7 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
            icmp->checksum = 0;
            icmp->checksum = ip_checksum((char*)(packet+14+20),ntohs(iph->ip_len)-20);
            memcpy(eth->ether_dhost,eth->ether_shost,6);
- 		   flag=1;
+       	   flag=1;
            iph->ip_dst.s_addr=iph->ip_src.s_addr;
            if(ioctl(pcap_fileno(ppcap),SIOCGIFADDR,&ifr)<0)
       {
@@ -211,10 +229,9 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
       {
 
         s_ip= (struct sockaddr_in*)&ifr.ifr_addr;
-      }
+       }
           iph->ip_src.s_addr=s_ip->sin_addr.s_addr;
-        }
-      }
+      
     }
   else
   {
@@ -251,7 +268,7 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
        /* Injecting the packet into the destination interface */
      
   pcap_t* ppcap = pcap_open_live(ifname, 98, 0, 0, pcap_errbuf);
-  if(ppcap == NULL)
+    if(ppcap == NULL)
   {
     return;
   }
@@ -264,13 +281,11 @@ void callback(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char *pac
   else
   {
     s_hw= (unsigned char*)ifr.ifr_hwaddr.sa_data;
-    printf(" MAC : %x.%x.%x.%x.%x.%x ; Protocol family out loop : %d\n", s_hw[0],s_hw[1],s_hw[2],s_hw[3],s_hw[4],s_hw[5],ifr.ifr_hwaddr.sa_family); //SIOCGIFHWADDR
-  }
+   }
 
   memcpy(eth->ether_shost,s_hw,6);
 
   /* Finding the destination MAC address */
-printf("Source of the sending packet @312 : %s \n",inet_ntoa(iph->ip_src));
     if(flag==0)
    {
   memset(&arpreq, 0, sizeof(arpreq));
@@ -278,7 +293,6 @@ printf("Source of the sending packet @312 : %s \n",inet_ntoa(iph->ip_src));
   sin->sin_family = AF_INET;
   sin->sin_addr.s_addr = next_ip.s_addr;
   strcpy(arpreq.arp_dev,ifname);
-  printf("Next hop ip %d: %s \n",(count-1),inet_ntoa(sin->sin_addr));
 
  if (ioctl(pcap_fileno(ppcap), SIOCGARP, &arpreq) < 0) 
   {
@@ -289,27 +303,19 @@ printf("Source of the sending packet @312 : %s \n",inet_ntoa(iph->ip_src));
   {
     d_hw = (unsigned char *) &arpreq.arp_ha.sa_data[0];
 
-    printf("Ethernet address: %02X:%02X:%02X:%02X:%02X:%02X",d_hw[0], d_hw[1], d_hw[2], d_hw[3], d_hw[4], d_hw[5]);
   } 
-  
+ 
 
   memcpy(eth->ether_dhost,d_hw,6);
-}
+ }
      
   iph->ip_sum = 0;
   iph->ip_sum = ip_checksum(iph, 20);
-	printf("/****Protocol Version afterrrrrrrrrrrrrrrrrrrrrr- %d",IP_V(iph));
-
-  printf("Source of the sending packet : %s \n",inet_ntoa(iph->ip_src));
-  printf(" Source in hex : %02x.%02x.%02x.%02x",packet[25],packet[26],packet[27],packet[28]);
-  for(int n=0;n<101;n++)
-  {
-    printf("%02x.",packet[n]);
-  }
+ 
   int p = pcap_sendpacket(ppcap, packet, ntohs(iph->ip_len)+14);
   if (p != 0)
   {
-   pcap_perror(ppcap, "Failed\n");
+    pcap_perror(ppcap, "Failed\n");
     pcap_close(ppcap);
   }
   else
