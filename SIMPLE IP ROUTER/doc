@@ -1,1 +1,65 @@
+NETWORK ENVIRONMENT:-
+ ---------------------
+ 1. 2 NODES ARE CONNECTED TO THIER RESPECTIVE ROUTER WITH A ETHERNET LINK, WITH BOTH ROUTERS ARE CONNECTED TO EACH OTHER USING ETHERNET LINKS.
+ 2. ONE ROUTER WITH OUR ROUTER PROGRAM
+ 3. STANDARD ROUTER PROVIDED BY THE DETER LAB
 
+SIMPLE IP ROUTER:-
+---------------------
+AIM : TO DESGIN A SIMPLE IP ROUTER WITH PING AN TRACEROUTE CAPAILITY.
+
+STEPS:-
+----------------------
+1. Install pcap on your router node which enables it incomming packets and outgoing packets.
+ using the command : - sudo apt-get install libpcap-dev
+ 
+2. do make with the makefile
+
+3. execeute the binary image
+
+4. Trying ping from one node.
+
+5. Trying Traceroute.
+
+ ADDITIONAL TOOLS USED FOR DEBUGGING:-
+ ------------------------------------------
+ sudo apt-get install tcpdump
+ 
+ WIRESHARK -  sudo tcpdump -i eth1
+ here eth1 is the link I want to sniff on.
+ 
+ OVERVIEW:
+ ----------
+ 
+ 1. populating the ARP table from the source code using commands-
+ (This is necessary becuase when we boot up the machine the ARP table woud be empty)
+ 
+  a.)  arp_accept - 1
+	Define behavior for gratuitous ARP frames who's IP is not
+	already present in the ARP table:
+	1 - create new entries in the ARP table
+
+	Both replies and requests type gratuitous arp will trigger the
+	ARP table to be updated, if this setting is on.
+
+	If the ARP table already contains the IP address of the
+	gratuitous arp frame, the arp table will be updated regardless
+	if this setting is on or off.
+ 
+ 
+  b.) arpsend -D -e with this command we are sending ARP requests to neighbouring hosts  
+
+
+2. arp -v to display the ARP table.
+
+3. Since we are already aware of the network , we are therefore hardcoding the  Routing table.
+
+4. Finding out all interfaces connected to the router and listening on them by opening separate threads for them.
+
+5. Upon Arrival of a packet , we call up a function that will break open the packet.
+
+6. Checking if the TTL = 0 means the packet needs to dropped and a ICMP message needs to be sent back again.
+
+7. Filling the appropriate filed in the IP header.
+
+8. Pushing the packet on the correct interface.
