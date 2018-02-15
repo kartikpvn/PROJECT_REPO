@@ -11,7 +11,18 @@
 #include <assert.h>
 #include<sys/time.h>
 #include <arpa/inet.h>
-
+#include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 unsigned short csum(unsigned short *ptr,int nbytes)
 {
@@ -78,7 +89,7 @@ int main (int argc, char *argv[])
     }
     filedata=mmap(NULL,filesize,PROT_READ,MAP_PRIVATE | MAP_POPULATE,fd,0);
     temp_data=filedata;
-   counter=filesize/1475;
+    counter=filesize/1475;
     remaining=filesize%1475;
     int num_of_packets=counter,pack_size;
 
@@ -92,7 +103,7 @@ int main (int argc, char *argv[])
 
     time_out.tv_sec=0;
     time_out.tv_usec=300000;
-
+ 
     memset (datagram, 0, 1500);
     memset (datagram1, 0, 1500);
 
@@ -111,6 +122,7 @@ int main (int argc, char *argv[])
     memcpy(data,&seq_sent,sizeof(uint32_t));
     data=data+4;
     memcpy(data,&file_sent,sizeof(uint32_t));
+ 
     //some address resolution
     strcpy(source_ip , argv[2]);
     sin.sin_family = AF_INET;
@@ -125,13 +137,14 @@ int main (int argc, char *argv[])
     iph->frag_off = 0;
     iph->ttl = 255;
     iph->protocol = IPPROTO_RAW;
-    iph->check = 0;   
+    iph->check = 0;      //Set to 0 before calculating checksum
     iph->saddr = inet_addr ( source_ip );    //Spoof the source ip address
     iph->daddr = sin.sin_addr.s_addr;
 
     //Ip checksum
     iph->check = csum ((unsigned short *) datagram, iph->tot_len);
 
+    
      if (sendto (s, datagram, iph->tot_len ,  0, (struct sockaddr *) &sin, sizeof (sin)) < 0)
         {
             perror("sendto failed");
@@ -171,16 +184,13 @@ int main (int argc, char *argv[])
               break;}
         data=datagram+sizeof(struct iphdr);
         seq++;
-        //printf("\n %d : ",seq);
         seq_sent=htonl(seq);
         memcpy(data,&seq_sent,sizeof(uint32_t));
         data=data+4;
         memcpy (data, buf,pack_size);
-
+    
         iph->tot_len = sizeof (struct iphdr) + pack_size+4;
         iph->check = csum ((unsigned short *) datagram, iph->tot_len);
-        //if(i%120==0)
-         //  usleep(1500);
         if (sendto (s, datagram, iph->tot_len ,  0, (struct sockaddr *) &sin, sizeof (sin)) < 0)
         {
             perror("sendto failed");
@@ -216,12 +226,14 @@ int main (int argc, char *argv[])
     int k=0,m=0;
     while(1)
     {
+            //memset(datagram,0,1500);
             k=0;
             lost_track=lost_seq;
             while(1)
             {
                     if(recvfrom(s,datagram1,1500,0,&addr,&fromlen)<0)
                     {
+                            // *data='1';
                            perror(" Recvfrom failed");
                             break;
                     }
@@ -229,7 +241,6 @@ int main (int argc, char *argv[])
                    data = datagram1+sizeof(struct iphdr);
                     iph =(struct iphdr*)datagram1;
                     tot_len=iph->tot_len;
-                    //memcpy(&tot_len,datagram+2,2);
                     tot_len = ntohs(tot_len);
                     
                     tot_len = tot_len - sizeof(struct iphdr);
@@ -284,7 +295,6 @@ int main (int argc, char *argv[])
                             recvd_seq=ntohl(recvd_seq);
                             temp_data=filedata+((recvd_seq-1)*1475);
                             pack_size=(recvd_seq==num_of_packets+1) ? remaining : 1475;
-                            
 #if 1
                             memcpy(buf,temp_data,recvd_seq==num_of_packets+1 ? remaining:1475);       // Vandhana instead of 1475 check if it is last packet and then add only remaining ones
                             buf[1476]='\0';
@@ -295,7 +305,10 @@ int main (int argc, char *argv[])
                             {
                                     perror("sendto failed 2");
                             }
-                                                              }
+                            else
+                            {
+                                    printf ("Packet Send. Length & Sequence for NACKs: %d \n" , iph->tot_len,recvd_seq);
+                            }
 #endif
                     }
                     memset(lost_seq,0,3000000);
