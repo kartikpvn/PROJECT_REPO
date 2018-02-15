@@ -1,0 +1,30 @@
+
+This is an ongoing project
+
+WEBSITE: oasys-lab.isi.edu (please click on Virtual Web Conference) then allow access to microphone and camera.
+
+
+AIM : To offer a Virtual 3D environment of a class room, where viewers can see the live lectures happening at a remote place.
+----
+
+TEAM ARRANGEMENT:
+-----------------
+Team of 5 people in 2 team of 2-3 each.
+There are 2 teams.
+  1.) Team1( My team) : To develop a webinterface along with web conferencing capablility for tutors can log in and give lectures.
+  2.) Team2           : To work on a Virtual 3D head set- HTC VIVE, OCCULUS RIFT allow it to offer live feed and offer a virtual class room
+                        Environment.
+
+IMPLEMENTATION:  Currently we are going ahead with the idea of using Google Web RTC to create a web conferencing website.
+--------------   Google Web RTC offer real time plug in free web conferencing faclity.
+
+CURRENT STATUS:
+--------------  
+                1. Set up an Apache web server.
+                2. Completed the basic skeletion of the website 
+                2. Allow Google Chrome access users camera and microphone.
+                3. Virtual Class Room Envinroment created.
+                
+                
+
+
