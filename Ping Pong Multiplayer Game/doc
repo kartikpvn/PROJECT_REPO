@@ -1,1 +1,4 @@
 
+g++ -o test -g game_test.h network.h udp_client_server.h working_test.cpp -lglut -lGL -lGLU
+
+sudo apt-get install freeglut3-dev
